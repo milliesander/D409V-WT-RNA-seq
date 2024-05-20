@@ -1,0 +1,26 @@
+# D409V/WT medial septum RNA seq analysis
+# Author: Millie Sander
+# Part 2: Data Import into R using output from STAR
+
+a) Create sample table e.g. 
+sampleName	fileName	condition
+3013_12	3013_12ReadsPerGene.out.tab	A
+3013_14	3013_14ReadsPerGene.out.tab	A
+3013_15	3013_15ReadsPerGene.out.tab	A
+3013_16	3013_16ReadsPerGene.out.tab	A
+3013_31	3013_31ReadsPerGene.out.tab	B
+3013_33	3013_33ReadsPerGene.out.tab	B
+3013_34	3013_34ReadsPerGene.out.tab	B
+3013_36	3013_36ReadsPerGene.out.tab	B
+3013_mCh1	3013_mCh1ReadsPerGene.out.tab	control
+3013_mCh2	3013_mCh2ReadsPerGene.out.tab	control
+3013_mCh3	3013_mCh3ReadsPerGene.out.tab	control
+3013_mCh4	3013_mCh4ReadsPerGene.out.tab	control
+
+b) Assign directory where count files and sample table are stored
+directory <- "C:/Users/dmsoanes/OneDrive - University of Exeter/Sequencing/projects/Project_3013_Natsuki_Takamura/htseq"
+c) Import  sample table
+sampleTable <- read.table(file.path(directory, "sample_table.txt"), header = TRUE)
+d) Create DESeq2 data object.
+library(DESeq2)
+dds <- DESeqDataSetFromHTSeqCount(sampleTable = sampleTable, directory = directory, design= ~ condition)

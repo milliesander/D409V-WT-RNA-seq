@@ -1,0 +1,77 @@
+# D409V/WT medial septum RNA seq analysis
+# Author: Millie Sander
+# Part 3: TIN score calculation 
+
+#!/bin/bash
+#SBATCH -A Research_Project-MRC164847 # research project to submit under.
+#SBATCH --export=ALL # export all environment variables to the batch job.
+#SBATCH -D . # set working directory to .
+#SBATCH -p mrcq # submit to the parallel test queue
+#SBATCH --time=72:00:00 # Maximum wall time for the job
+#SBATCH --nodes=1 # specify number of nodes.
+#SBATCH --ntasks-per-node=16 # specify number of processors.
+#SBATCH --mail-type=END # send email at job completion
+#SBATCH --mail-user=gp487@exeter.ac.uk # email address
+Part 1: convert gff to bed files
+module load SAMtools
+cd /lustre/home/ms739/RNA-seq/genome_ref
+
+faidx -i bed GRCm39.primary_assembly.genome.fa > GRCm39.primary_assembly.genome.bed
+
+Part 2: convert fastq to sam files 
+# Directory in which the data are processed
+ProcessDir=/lustre/home/ms739/RNA-seq
+
+# Directory containing indexed genome
+RefDir=/lustre/home/ms739/RNA-seq/genome_ref/index
+
+# Output directory
+OutDirBAM=/lustre/home/ms739/RNA-seq/genome_ref/BAM
+
+# Directory coontaining fastq files
+RawDir=/lustre/home/ms739/RNA-seq/genome_ref/fastq
+
+
+cd $ProcessDir
+module load STAR
+module load SAMtools
+for i in  ${RawDir}/*R1*
+do
+
+sample=$i 
+stem=${sample::-14}
+outBAM=${OutDirBAM}/${stem:41} # BAM path is 41 characters and first part of file is 15 
+
+STAR --genomeDir $RefDir  \
+--runThreadN 16 \
+--readFilesIn ${stem}_R1_cuta.fastq ${stem}_R2_cuta.fastq \
+--outFileNamePrefix $outBAM \
+--outSAMtype BAM SortedByCoordinate
+
+# Index the BAM file.
+samtools index $outBAM.bam
+â€‹
+#Generate an alignment report.
+samtools flagstat $outBAM.bam > alignment-report.txt	
+done
+â€‹
+â€‹
+echo "Conversion processes have been done!"
+Part 3: calculate TIN 
+module load RSeQC
+
+# Move to output folder
+cd /lustre/home/ms739/RNA-seq/tin_results
+
+# Folder containing Reference Genome
+RefDir=/lustre/home/ms739/RNA-seq/genome_ref
+
+# Folder containing BAM files
+RawDir=/lustre/home/ms739/RNA-seq/genome_ref/BAM/tq
+
+for i in  ${RawDir}/*.bam
+do
+
+tin.py -i ${i}, -r ${RefDir}/gencode.vM32.basic.bed
+done
+ 

@@ -1,0 +1,28 @@
+# D409V/WT medial septum RNA seq analysis
+# Author: Millie Sander
+# Part 1: Transcript quantification using STAR
+
+# Create index for genome.
+
+STAR --runThreadN NumberOfThreads --runMode genomeGenerate --genomeDir /path/to/genomeDir --genomeFastaFiles /path/to/genome/fasta1 --sjdbGTFfile /path/to/annotations.gtf
+
+# The genome directory which is where the STAR index is stored must be created first. Must use gtf files for annotation, gff will not work.
+
+# Align reads against reference sequence (this example uses gzipped reads). 
+
+STAR --runThreadN NumberOfThreads --genomeDir /path/to/genomeDir --readFilesIn /path/to/read1 [/path/to/read2] --readFilesCommand zcat --outFileNamePrefix name --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts
+
+# Output: 
+
+i) bam file of reads aligned against genome (nameAligned.sortedByCoord.out.bam)
+ii) tab-delimited file containing number of reads mapped to each gene (nameReadsPerGene.out.tab)
+Loop for paired-end reads
+for f in *1.fq.gz; do stem=${f::7}; ./STAR --runThreadN 16 --genomeDir ../reference/STAR --readFilesIn ${stem}_trimmed_r1.fq.gz ${stem}_trimmed_r2.fq.gz --readFilesCommand zcat --outFileNamePrefix $stem --outSAMtype BAM SortedByCoordinate --quantMode GeneCounts; done
+Gene count output (nameReadsPerGene.out.tab)
+column 1: gene ID
+column 2: counts for unstranded RNA-seq
+column 3: counts for the 1st read strand aligned with RNA (htseq-count option -s yes)
+column 4: counts for the 2nd read strand aligned with RNA (htseq-count option -s reverse)
+Use cut command in Linux to remove unwanted columns and lines showing collated gene counts.
+In this example the first and fourth columns are kept and first four lines removed.
+for f in *Gene*; do cut -f 1,4 $f | tail -n +5 > $f.htseq; done
